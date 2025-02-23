@@ -4,14 +4,16 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage"; // Import Firebase Storage
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAYknoaQMpUBUN06FWsF8CeJqzmOreVugU",
-  authDomain: "news-admin-de1af.firebaseapp.com",
-  projectId: "news-admin-de1af",
-  storageBucket: "news-admin-de1af.appspot.com",
-  messagingSenderId: "771782936033",
-  appId: "1:771782936033:web:aaec810f95f41759b8bea0",
-  measurementId: "G-46LPDQ2K0V"
+  apiKey: "AIzaSyB9SmQo5oEFibcqs-JNDE0NjUS-b7o7yf8",
+  authDomain: "news-reporting-app-4d009.firebaseapp.com",
+  databaseURL: "https://news-reporting-app-4d009-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "news-reporting-app-4d009",
+  storageBucket: "news-reporting-app-4d009.firebasestorage.app",
+  messagingSenderId: "192509468615",
+  appId: "1:192509468615:web:7d39eca79820786a0343e2",
+  measurementId: "G-8RW50C2SEC"
 };
+
 
 const app = initializeApp(firebaseConfig);
 
