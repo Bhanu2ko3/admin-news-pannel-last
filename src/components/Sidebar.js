@@ -7,7 +7,7 @@ import { UserCircleIcon } from '@heroicons/react/outline'; // Correct import for
 export default function Sidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [setUserProfilePic] = useState(null);
+  const [userProfilePic, setUserProfilePic] = useState(null);  // Fix here
 
   const navLinkClasses = (path) =>
     `block px-4 py-2 rounded-lg ${pathname === path ? "bg-gray-700" : "hover:bg-gray-700"}`;

@@ -8,9 +8,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       const usersSnapshot = await getDocs(collection(db, "users"));
-      const newsSnapshot = await getDocs(collection(db, "news"));
-      const pendingSnapshot = await getDocs(query(collection(db, "news"), where("status", "==", "pending")));
-      const approvedSnapshot = await getDocs(query(collection(db, "news"), where("status", "==", "approved")));
+      const newsSnapshot = await getDocs(collection(db, "posts"));
+      const pendingSnapshot = await getDocs(query(collection(db, "posts"), where("status", "==", "pending")));
+      const approvedSnapshot = await getDocs(query(collection(db, "posts"), where("status", "==", "approved")));
 
       setStats({
         totalUsers: usersSnapshot.size,
