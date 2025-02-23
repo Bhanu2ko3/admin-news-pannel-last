@@ -5,8 +5,9 @@ import { db } from "../firebase";
 export default function NewsTable() {
   const [news, setNews] = useState([]);
   const [editMode, setEditMode] = useState(false);
-  const [editNews, setEditNews] = useState({ postId: "", caption: "", reporter: "", topic: "", status: "", image: "", timestamp: 0 });
-  const [modalState, setModalState] = useState({ open: false, postId: null, topic: "",  feedback: "", rating: 0 });
+  const [editNews, setEditNews] = useState({ postId: "", content: "", reporter: "", topic: "", status: "", image: "", timestamp: 0 });
+  const [modalState, setModalState] = useState({ open: false, postId: null, topic: "", reporter: "", feedback: "", rating: 0, content: "", image: "" });
+  const [rejectModalState, setRejectModalState] = useState({ open: false, postId: null, reason: "" });
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "posts"), snapshot => {
@@ -20,34 +21,95 @@ export default function NewsTable() {
     setEditNews((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleApprove = (id, topic) => setModalState({ open: true, postId: id, topic,  feedback: "", rating: 0 });
+  const handleApprove = (id, topic, reporter, content, image) => {
+    if (!topic || !reporter || !content || !image) {
+      console.error("Topic, Reporter, Content, or Image is missing.");
+      return;
+    }
+    setModalState({
+      open: true,
+      postId: id,
+      topic: topic || "No Topic",
+      reporter: reporter || "Anonymous",
+      feedback: "",
+      rating: 0,
+      content: content || "No Content",
+      image: image || "No Image",
+    });
+  };
 
-  const handleDelete = async (id) => await deleteDoc(doc(db, "posts", id));
+  
 
   const handleSaveEdit = async () => {
-    const { postId, caption, reporter, topic, image, status, timestamp } = editNews;
-    await updateDoc(doc(db, "posts", postId), { caption, reporter, topic, status: status || "pending", image, timestamp });
+    const { postId, content, reporter, topic, image, status, timestamp } = editNews;
+    await updateDoc(doc(db, "posts", postId), { content, reporter, topic, status: status || "pending", image, timestamp });
     setEditMode(false);
   };
 
   const handleFeedbackSubmit = async () => {
-    const { feedback, rating } = modalState;
+    const { feedback, rating, reporter, topic, content, image, postId } = modalState; // Extract postId from modalState
+    if (!reporter || !topic || !content || !image) {
+      console.error("Reporter, Topic, Content, or Image are required.");
+      return;
+    }
+  
     try {
-      const docRef = await addDoc(collection(db, "news"), {
-        topic: modalState.topic,
-        content: feedback,
-        reporter:  "",
-        status: "pending",
+      const docRef = await addDoc(collection(db, "newsApproved"), {
+        topic,
+        content,
+        reporter,
+        status: "Approved",
         feedback,
         rating,
+        image,
         createdAt: serverTimestamp(),
       });
+  
+      // Optionally, remove the rejected post from the posts collection
+      if (postId) {
+        await deleteDoc(doc(db, "posts", postId)); // Use postId from modalState
+      }
+  
       console.log("Document written with ID:", docRef.id);
-      setModalState({ open: false, postId: null, topic: "", feedback: "", rating: 0 });
+      setModalState({ open: false, postId: null, topic: "", reporter: "", feedback: "", rating: 0, content: "", image: "" });
     } catch (e) {
       console.error("Error adding document:", e);
     }
   };
+  
+
+  const handleReject = async () => {
+    const { postId, reason } = rejectModalState;
+    const postToReject = news.find((item) => item.id === postId);
+  
+    if (reason.trim() === "") {
+      console.error("Rejection reason is required.");
+      return;
+    }
+  
+    try {
+      // First, update the post status to "rejected" in the posts collection
+      await updateDoc(doc(db, "posts", postId), { status: "rejected" });
+  
+      // Then, add the rejected post to the newsReject collection with the "Rejected" status
+      await addDoc(collection(db, "newsReject"), {
+        ...postToReject,
+        rejectionReason: reason,
+        status: "Rejected",  // Explicitly set the status to "Rejected"
+        rejectedAt: serverTimestamp(),
+      });
+  
+      // Optionally, remove the rejected post from the posts collection
+      await deleteDoc(doc(db, "posts", postId));
+  
+      // Close the reject modal
+      setRejectModalState({ open: false, postId: null, reason: "" });
+    } catch (e) {
+      console.error("Error rejecting post:", e);
+    }
+  };
+  
+  
 
   return (
     <div className="overflow-x-auto">
@@ -56,7 +118,7 @@ export default function NewsTable() {
       {editMode ? (
         <div className="mb-4 p-4 border rounded-lg">
           <h3 className="text-xl font-semibold mb-4">Edit News</h3>
-          {["caption", "reporter", "topic", "image"].map((field) => (
+          {["content", "reporter", "topic", "image"].map((field) => (
             <input
               key={field}
               type="text"
@@ -87,16 +149,16 @@ export default function NewsTable() {
           </thead>
           <tbody>
             {news.map((item) => (
-              <tr key={item.postId} className="border-t">
+              <tr key={item.id} className="border-t">
                 <td className="p-2">{item.image ? <img src={`data:image/jpeg;base64,${item.image}`} alt="Post" className="w-16 h-16 object-cover" /> : "No Image"}</td>
-                <td className="p-2">{item.caption}</td>
+                <td className="p-2">{item.content}</td>
                 <td className="p-2">{item.reporter}</td>
                 <td className="p-2">{item.topic}</td>
                 <td className="p-2">{item.status || "pending"}</td>
                 <td className="p-2 space-x-2">
-                  {item.status !== "approved" && <button onClick={() => handleApprove(item.postId, item.topic)} className="bg-green-500 text-white px-3 py-1 rounded">Approve</button>}
-                  <button onClick={() => handleDelete(item.postId)} className="bg-red-500 text-white px-3 py-1 rounded">Reject</button>
-                  <button onClick={() => { setEditNews(item); setEditMode(true); }} className="bg-yellow-500 text-white px-3 py-1 rounded">Edit</button>
+                  {item.status !== "approved" && <button onClick={() => handleApprove(item.id, item.topic, item.reporter, item.content, item.image)} className="bg-green-500 text-white px-3 py-1 rounded">Approve</button>}
+                  <button onClick={() => setRejectModalState({ open: true, postId: item.id })} className="bg-red-500 text-white px-3 py-1 rounded">Reject</button>
+
                 </td>
               </tr>
             ))}
@@ -104,6 +166,26 @@ export default function NewsTable() {
         </table>
       )}
 
+      {/* Reject Modal */}
+      {rejectModalState.open && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-semibold mb-4">Enter Rejection Reason</h3>
+            <textarea
+              value={rejectModalState.reason}
+              onChange={(e) => setRejectModalState((prev) => ({ ...prev, reason: e.target.value }))}
+              className="p-2 mb-4 w-full border rounded"
+              placeholder="Enter reason for rejection"
+            />
+            <div className="flex justify-end space-x-2">
+              <button onClick={handleReject} className="bg-red-500 text-white px-4 py-2 rounded">Submit</button>
+              <button onClick={() => setRejectModalState({ open: false, postId: null, reason: "" })} className="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
       {modalState.open && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg w-96">

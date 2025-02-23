@@ -35,25 +35,26 @@ export default function Sidebar() {
 
   return (
     <div className="w-64 h-full bg-gray-800 text-white flex flex-col justify-between p-4 space-y-4">
+
       <div>
-        <h2 className="text-2xl font-bold text-center">Admin</h2>
+        {/* Profile Link with Icon */}
+        <div className="mt-3.5">
+          <Link
+            to="/profile"
+            className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-700"
+          >
+            <UserCircleIcon className="h-8 w-8 text-white mr-3" /><h2 className="text-2xl font-bold text-center">Admin</h2>
+            <span className="text-sm"></span>
+          </Link>
+        </div>
+        
         <nav className="space-y-2 mt-4">
           <Link to="/" className={navLinkClasses("/")}>Dashboard</Link>
+          <Link to="/approved-news" className={navLinkClasses("/approved-news")}>Approved News</Link>
+          <Link to="/rejected-news" className={navLinkClasses("/rejected-news")}>Rejected News</Link> {/* New Rejected News Link */}
           <Link to="/users" className={navLinkClasses("/users")}>Manage Users</Link>
           <Link to="/news" className={navLinkClasses("/news")}>Manage News</Link>
         </nav>
-      </div>
-      
-      {/* Profile Link with Icon */}
-      <div className="mt-3.5">
-        <Link
-          to="/profile"
-          className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-700"
-        >
-          {/* Using UserCircleIcon from Heroicons v2 */}
-          <UserCircleIcon className="h-8 w-8 text-white mr-3" />
-          <span className="text-sm"></span>
-        </Link>
       </div>
 
       {/* Logout Button */}
