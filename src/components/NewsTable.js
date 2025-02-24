@@ -94,9 +94,9 @@ export default function NewsTable() {
       // Then, add the rejected post to the newsReject collection with the "Rejected" status
       await addDoc(collection(db, "newsReject"), {
         ...postToReject,
-        rejectionReason: reason,
+        feedback: reason,
         status: "Rejected",  // Explicitly set the status to "Rejected"
-        rejectedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
       });
   
       // Optionally, remove the rejected post from the posts collection
